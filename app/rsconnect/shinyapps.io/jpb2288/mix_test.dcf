@@ -1,0 +1,13 @@
+name: mix_test
+title: mix_test
+username:
+account: jpb2288
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 7681922
+bundleId: 6541336
+url: https://jpb2288.shinyapps.io/mix_test/
+when: 1669086289.78294
+lastSyncTime: 1669086289.78294
+asMultiple: FALSE
+asStatic: FALSE
