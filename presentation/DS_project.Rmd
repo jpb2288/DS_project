@@ -259,7 +259,7 @@ summary(model <- lm(DISTANCE ~ GENDER + AGE + I(AGE^2) + OCCUPATION + INCOME + M
 
 ```{r echo=FALSE}
 
-mode1 <- readRDS("model1.rds")
+model1 <- readRDS("model1.rds")
 summary(model1)
 
 ```
@@ -284,7 +284,7 @@ varImpPlot(model2)
 
 ### Ordered logit model
 
-```{r eval=FALSE, include=FALSE}
+```{r echo=FALSE}
 
 train  <-  BD_ModDR %>%  
   select(DISTANCE:EntScore) %>%
@@ -305,7 +305,7 @@ summary(model <- polr(DISTANCE ~ GENDER + AGE + I(AGE^2) + OCCUPATION + INCOME +
 
 ```{r echo=FALSE}
 
-mode3 <- readRDS("model3.rds")
+model3 <- readRDS("model3.rds")
 summary(model3)
 
 ```
@@ -317,27 +317,45 @@ saveRDS(model.null,"model3_null.rds")
 
 ```
 
-```{r eval=FALSE, include=FALSE}
+```{r echo=FALSE}
 
-R2 <- 1-(model$deviance/model.null$deviance)
+y_train <- BD_ModDR[s_train, "DISTANCE"]
+y_test  <- BD_ModDR[-s_train, "DISTANCE"]
 
-y_test <- BD_ModDR[-s_train, "DISTANCE"]
+## model 1
 
-yhat_test <- predict(model, newdata = BD_ModDR[-s_train , ])
+yhat_train_1 <- predict(model1, newdata = BD_ModDR[s_train , ])
+yhat_test_1  <- predict(model1, newdata = BD_ModDR[-s_train , ])
+
+R2_train_1 <- 1 - sum((y_train-yhat_train_1)^2)/sum((y_train-mean(y_train))^2)
+R2_test_1  <- 1 - sum((y_test -yhat_test_1)^2) /sum((y_test -mean(y_test))^2)
 
 
-test  <-  BD_ModDR %>%  
-  select(DISTANCE:EntScore) %>%
-  mutate(DISTANCE = cut(DISTANCE,5),
-         AGE      = AGE/10,
-         EntScore = EntScore*10) %>% 
-  slice(-s_train) 
+## model 2 
 
-yhat_test <- predict(model, newdata = test)
+yhat_train_2 <- predict(model2, newdata = BD_ModDR[s_train , ])
+yhat_test_2  <- predict(model2, newdata = BD_ModDR[-s_train , ])
 
+R2_train_2 <- 1 - sum((y_train-yhat_train_2)^2)/sum((y_train-mean(y_train))^2)
+R2_test_2  <- 1 - sum((y_test -yhat_test_2)^2) /sum((y_test -mean(y_test))^2)
+
+
+## model 3
+
+model3.null <- readRDS("model3_null.rds")
+
+R2_train_3 <- 1 - (model3$deviance/model3.null$deviance)
+
+tb_results <- data.frame(
+  Model = c("linear regression", "random forest", "ordered logit"),
+  Train = c(R2_train_1, R2_train_2, R2_train_3),
+  Test  = c(R2_test_1,  R2_test_2,  NA)
+      )
+tb_results %>%
+  kbl() %>%
+  kable_material(c("striped"),full_width = T)
 ```
 
-Create a summary table
 
 ## Deployment
 
@@ -365,5 +383,14 @@ On top of that, the Shiny apps can be deployed easily on the shiny server with a
 ```{r eval=FALSE, include= T}
 
 ## app code
+
+# test  <-  BD_ModDR %>%  
+#   select(DISTANCE:EntScore) %>%
+#   mutate(DISTANCE = cut(DISTANCE,5),
+#          AGE      = AGE/10,
+#          EntScore = EntScore*10) %>% 
+#   slice(-s_train) 
+# 
+# yhat_test <- predict(model, newdata = test)
 
 ```
