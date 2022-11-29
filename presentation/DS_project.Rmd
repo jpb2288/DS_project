@@ -12,7 +12,7 @@ output: html_document
 h1.title {font-size: 32px;}
 h1 {font-size: 30px;color: #00008B}
 h2 {font-size: 24px;color: #4169E1}
-h3 {font-size: 22px;color: #4169E1}
+h3 {font-size: 22px;color: #808080}
 h4 {font-size: 20px;color: #808080}
  p {font-size: 18px;color: black} 
 li {font-size: 18px;color: black}
@@ -48,8 +48,6 @@ This project is inspired on the author previous work published as a paper on the
 <https://doi.org/10.1016/j.jtrangeo.2020.102844>
 
 This project creates an application based on the econometric model to predict average travel distance described on the paper. Furthermore, the application was deployed to the shiny apps server so it can be accessed remotely on the following link <https://jpb2288.shinyapps.io/mix_test/>
-
-# Cambiar link
 
 ## Data sources
 
@@ -249,33 +247,44 @@ train  <-  BD_ModDR %>%
 
 ```
 
-#### Linear regression
+### Linear regression
 
-```{r}
+```{r eval= F , include= T}
 
-summary(model <- lm(DISTANCE ~ GENDER + AGE + I(AGE^2) + OCCUPATION + INCOME + MODE_T + EntScore, data = train)) # saveRDS(model,"model1.rds")
+summary(model <- lm(DISTANCE ~ GENDER + AGE + I(AGE^2) + OCCUPATION + INCOME + MODE_T + EntScore, data = train)) 
+
+# saveRDS(model,"model1.rds")
 
 ```
 
-#### Random forest model
+```{r echo=FALSE}
+
+mode1 <- readRDS("model1.rds")
+summary(model1)
+
+```
+
+
+### Random forest model
 
 ```{r eval= F , include= T}
 
 model <- randomForest(DISTANCE ~ ., data = train , mtry = 4, importance = TRUE) #, ntree = 25 
+
 #saveRDS(model,"model2.rds")
 
 ```
 
 ```{r echo=FALSE}
 
-model <- readRDS("model2.rds")
-model
-varImpPlot(model)
+model2 <- readRDS("model2.rds")
+model2
+varImpPlot(model2)
 ```
 
-#### Ordered logit model
+### Ordered logit model
 
-```{r echo=FALSE}
+```{r eval=FALSE, include=FALSE}
 
 train  <-  BD_ModDR %>%  
   select(DISTANCE:EntScore) %>%
@@ -286,29 +295,36 @@ train  <-  BD_ModDR %>%
 
 ```
 
-```{r}
-summary(model <- polr(DISTANCE ~ GENDER + AGE + I(AGE^2) + OCCUPATION + INCOME + MODE_T + EntScore, data = train))
+```{r eval= F , include= T}
+
+summary(model <- polr(DISTANCE ~ GENDER + AGE + I(AGE^2) + OCCUPATION + INCOME + MODE_T + EntScore, data = train)) 
+
+#saveRDS(model,"model3.rds")
+
+```
+
+```{r echo=FALSE}
+
+mode3 <- readRDS("model3.rds")
+summary(model3)
 
 ```
 
 ```{r eval=FALSE, include=FALSE}
-# Calculate the performance indicator with test
+# Code to create null ordered model
+summary(model.null <- polr(DISTANCE ~ 1, data = train))
+saveRDS(model.null,"model3_null.rds")
+
+```
+
+```{r eval=FALSE, include=FALSE}
+
+R2 <- 1-(model$deviance/model.null$deviance)
 
 y_test <- BD_ModDR[-s_train, "DISTANCE"]
 
 yhat_test <- predict(model, newdata = BD_ModDR[-s_train , ])
 
-plot(yhat_test , y_test)
-
-hist(yhat_test, breaks = 100)
-
-mean (( yhat_test - y_test)^2)
-importance(model)
-
-
-```
-
-```{r eval=FALSE, include=FALSE}
 
 test  <-  BD_ModDR %>%  
   select(DISTANCE:EntScore) %>%
@@ -345,3 +361,9 @@ The three components of an app are:
 
 On top of that, the Shiny apps can be deployed easily on the shiny server with a **free tier of 5 applications and 25 active hours**. More information can be found on the [Shiny tutorial](https://shiny.rstudio.com/tutorial/)
 
+
+```{r eval=FALSE, include= T}
+
+## app code
+
+```

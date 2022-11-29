@@ -22,7 +22,7 @@ ui <- fluidPage(
     # Sidebar with a date input 
     sidebarLayout(
         sidebarPanel(
-          tags$a(href="https://github.com/nychealth/coronavirus-data", "Data Repository", target="_blank"),
+          tags$a(href="https://github.com/jpb2288/DS_project", "Data Repository", target="_blank"),
           
           h5("For prediction of your most likely trip distance choose the tap 'Distance calculator' on the right panel, select your profile with the controls below and press the 'Submit' button"),
           
@@ -59,7 +59,7 @@ ui <- fluidPage(
                                  The distance is calculated according to the responses given in the Bogota mobility survey by people with sociodemographic variables similar to yours."),
                           tags$p("The map in the tap 'Distance calculator' shows the distance according to your characteristics and your house location in the city."),
                           tags$p("This project is inspired on the author previous work published as a paper on the journal of transport geography. It can be downloaded from https://doi.org/10.1016/j.jtrangeo.2020.102844"),
-                          tags$p("In adition, this project was developed as final project for the course CS551- Data Science of the University of Alabama"),
+                          tags$p("In adition, this project was developed as final project for the Fall 2022 course CS551- Data Science of the University of Alabama"),
                           tags$img(src="UA_logo.png", width =200 , height = 40)
                    ))),
         tabPanel("Distance calculator", icon=icon("map"), 
