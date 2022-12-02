@@ -34,11 +34,6 @@ library(tidyverse)
 
 # A model to predict the average travel distance of Bogota residents: *Model estimation, visualization and deployment*
 
-## Table of contents
-
--   Introduction
--   Data sources
-
 ## Introduction
 
 This project is inspired on the author previous work published as a paper on the journal of transport geography.
@@ -47,9 +42,13 @@ This project is inspired on the author previous work published as a paper on the
 
 <https://doi.org/10.1016/j.jtrangeo.2020.102844>
 
-This project creates an application based on the econometric model to predict average travel distance described on the paper. Furthermore, the application was deployed to the shiny apps server so it can be accessed remotely on the following link <https://jpb2288.shinyapps.io/mix_test/>
+In the present project I extend the previous research in two aspects:
 
-## Data sources
+-   Testing if the relation between built environment and travel distance described in the paper holds when using other machine learning models.
+
+-   Improving the final results presentation for allowing users to interact and learn from this research
+
+## Data Acquisition
 
 This data set is the 2015 home mobility survey in the capital city of Colombia, Bogota. It gives information about the mobility patterns on a typical working day, i.e. Tuesday to Thursday. It records for a sample of households, the modes of transport used and time spent on each leg of their trips, as well as other socioeconomic aspects for all family members such as income, car ownership, education, etc... An expansion factor is given in order to generalize characteristics of a surveyed individual to a larger number on the population.
 
@@ -59,10 +58,6 @@ The data can be retrieved from the open data site managed by city of Bogota auth
 
 The official language in Colombia is Spanish,therefore some names at the beginning of the analysis will be used in that language but then translated to English. The following chunk of code indicates the initial data analysis.
 
-### Data loading and merging
-
-The first step is the creation of a single data frame that have the information for household, person and trip
-
 ```{r eval=F, include=T}
 
 path_to_survey <- "H:/.shortcut-targets-by-id/0Bzyr0SveNi4AUWl3aC1fT2kzclk/Encuesta de Movilidad 2015/Base de Datos Completa/"
@@ -70,6 +65,7 @@ HOG <- read_csv(paste0(path_to_survey,"ENCUESTAS_ANONIMIZADO.csv")) # file for h
 PERS<- read_csv(paste0(path_to_survey,"PERSONAS_ANONIMIZADO.csv"))  # file for person information
 VIAJ<- read_csv(paste0(path_to_survey,"VIAJES_ANONIMIZADOS.csv"))   # file for trip information
 
+#The first step was the creation of a single data frame that have the information for household, person and trip
 #Here a the non-informative variables such as surveyor name are excluded from the trip data base 
 BD_ModDR<- VIAJ[,c("ID_ENCUESTA","NUMERO_PERSONA","NUMERO_VIAJE",
                    "CODVIAJ","ID_MOTIVOVIAJE","Dist_Red",
@@ -92,7 +88,7 @@ BD_ModDR<- join(BD_ModDR,HOG,by= "ID_ENCUESTA", type ="inner")
 
 ```
 
-### Filters
+## Data Cleaning and labeling
 
 The following lines filter the data set on multiple aspects so missing values and non target population is taken into account in upcoming steps
 
@@ -111,9 +107,7 @@ BD_ModDR <- subset(BD_ModDR,BD_ModDR$municipio==11001) #Keeps only trips inside 
 
 ```
 
-### Formatting
-
-In this step all variables are translated to English and given the correct levels. Finally a rds file is exported as first stage output of the project
+In this step also all variables are translated to English and given the correct levels. Finally a rds file is exported as first stage output of the project
 
 ```{r eval=F, include=T}
 
@@ -186,9 +180,9 @@ BD_ModDR <- BD_ModDR %>%
 saveRDS(BD_ModDR,"BD_ModDR.rds") # save data for second step
 ```
 
-## Exploratory data analysis
+## Feature Engineering
 
-On the second step, an analysis of the data is carried out in order to understand the possible relations among travel distance and the person characteristics. Some descriptive statistics are presented below.
+An analysis of the data was carried out in order to understand the possible relations among travel distance and the person characteristics. Some descriptive statistics are presented below.
 
 Data base structure.
 
@@ -225,15 +219,15 @@ As the data base has a geographic component it is necessary to have a look at th
 
 ![](images/income_map.png)
 
-It can be see that there are possible correlation among individual characteristics and the trip length, a subset will be selected as the final group of predictors based on their performance on the modeling stage that comes next.  
+It can be see that there are possible correlation among individual characteristics and the trip length, a subset will be selected as the final group of predictors based on their performance on the modeling stage that comes next.
 
-## Model building
+## Model Development
 
 The third step is the estimation of three different statistic/machine learning models. The following scheme summarizes the approach used for this step.
 
 <center><img src="images/models.png" alt="drawing1" style="width:700px;"/></center>
 
-The data was divided in two subsets, the train set with 80% of the information and the test set with the remaining 20%. All models were first run on the train set and then on the test set. For both runs a performance indicator was calculated. Details of the calculation, summary and comparison of the indicator are in the next section. In the boxes below are the results for the three models (when run multiple times only the best performance model is presented). 
+The data was divided in two subsets, the train set with 80% of the information and the test set with the remaining 20%. All models were first run on the train set and then on the test set. In the boxes below are the results for the three models, when run multiple times only the best performance model is presented.
 
 ```{r echo=FALSE}
 options(scipen = 100, digits = 3)
@@ -247,7 +241,9 @@ train  <-  BD_ModDR %>%
 
 ```
 
-### Linear regression
+### Linear regression training
+
+The linear regression was run several times during the paper publication process, identifying the most relevant variables and how they affected the model. Given that the number of variables is manageable I did not used any algorithm to fit the best model possible. One interesting feature on this model is that the variable AGE is introduced as a two grade polynomial, indicating a non-linear relation with distance traveled, i.e. People travel longer distances as the grow old, but then go back to travel shorter distances. It must be in close relation with the changes on responsibilities that each life stage brings. The adjusted R squared is quite high for the transportation area standards
 
 ```{r eval= F , include= T}
 
@@ -264,25 +260,34 @@ summary(model1)
 
 ```
 
+### Random forest model training
 
-### Random forest model
+For the random forest model a number of hyper-parameters can be modified and different results will be obtained, from there the importance of tuning those values. First for the *mtry* parameter, which indicates the number of predictors that should be considered for each split of the tree, I selected a value suggested in the literature, it is *p/3* where *p* is the total number of predictors (10) so *mtry* was set to 4.
+
+For the *ntree* parameter, which indicates the number of trees to be grown, three different configurations were tested 50, 250 and 500. Results and discussion about the global performance of the three model configurations are on the Model Evaluation and Validation section.
+
+The results of the model with the best performance are displayed below. Two measures of variable importance are reported.According to Witten, D. (2021) the first *%IncMSE* is based on the mean decrease of accuracy in predictions on the out of bag samples when a given variable is permuted. The second *IncNodePurity* is a measure of the total decrease in node impurity that results from splits over that variable, averaged over all trees. In both cases the mode of transportation is the most important variable, while other variables do not have a clear position on the influence they exert over the model. Finally it is important to note that the time spent for calculation increased sustancially for a higher number of trees.
 
 ```{r eval= F , include= T}
 
-model <- randomForest(DISTANCE ~ ., data = train , mtry = 4, importance = TRUE) #, ntree = 25 
+model <- randomForest(DISTANCE ~ ., data = train , mtry = 4, ntree = 250 , importance = TRUE) #
 
-#saveRDS(model,"model2.rds")
+#saveRDS(model,"model2.2.rds")
 
 ```
 
 ```{r echo=FALSE}
+model2.1 <- readRDS("model2.1.rds")
+model2.2 <- readRDS("model2.2.rds")
+model2.3 <- readRDS("model2.3.rds")
 
-model2 <- readRDS("model2.rds")
-model2
-varImpPlot(model2)
+model2.2
+varImpPlot(model2.2)
 ```
 
-### Ordered logit model
+### Ordered logit model training
+
+For the training of this model the continuous numeric variable of travel distance was converted to equal distance ranges of 5 km each one. The model therefore is intended to classify a person characteristics into a travel distance range. In addition, a scaling of the variables *distance* and *age* was necessary, as this type of models are sensitive to numbers close to zero or too far on scale one from one to another. As in the linear model all variables are statistically significant and the non-linear relation of AGE holds. On the next section a discussion of the overall model performance is made.
 
 ```{r echo=FALSE}
 
@@ -310,6 +315,22 @@ summary(model3)
 
 ```
 
+## Model Evaluation and Validation
+
+For both runs (train and test) I used an indicator of performance to compare models and decide which one will be worth deploying on an interactive application. The indicator is similar to a Coefficient of determination in the sense that I compare the sum of squared errors for the predicted values against those produced by a null model. It is described formally on the following equation
+
+$$
+performance\_indicator = 1-\sum(y_i-\hat{y}_i)^2/\sum(y_i-\bar{y})^2 
+$$
+
+Where $\hat{y}_i$ are the predicted values and \bar{y} is the average travel distance.  For the ordered logistic model the indicator is slightly different since the predicted values for that model are ranges instead of numeric variables. The indicator is defined with the next formula.
+
+$$
+performance\_indicator = 1-Residual\_Deviance/Null\_Deviance 
+$$
+
+The following table displays the result of the performance indicator for all models 
+
 ```{r eval=FALSE, include=FALSE}
 # Code to create null ordered model
 summary(model.null <- polr(DISTANCE ~ 1, data = train))
@@ -322,42 +343,59 @@ saveRDS(model.null,"model3_null.rds")
 y_train <- BD_ModDR[s_train, "DISTANCE"]
 y_test  <- BD_ModDR[-s_train, "DISTANCE"]
 
+indicator <- function(model){
+  yhat_train <- predict(model, newdata = BD_ModDR[s_train , ])
+  yhat_test  <- predict(model, newdata = BD_ModDR[-s_train , ])
+
+  R2_train <- 1 - sum((y_train - yhat_train)^2)/sum((y_train - mean(y_train))^2)
+  R2_test  <- 1 - sum((y_test  - yhat_test)^2) /sum((y_test  - mean(y_test))^2)
+  res <- c(R2_train,R2_test)
+  return(res)
+}
+
 ## model 1
 
-yhat_train_1 <- predict(model1, newdata = BD_ModDR[s_train , ])
-yhat_test_1  <- predict(model1, newdata = BD_ModDR[-s_train , ])
-
-R2_train_1 <- 1 - sum((y_train-yhat_train_1)^2)/sum((y_train-mean(y_train))^2)
-R2_test_1  <- 1 - sum((y_test -yhat_test_1)^2) /sum((y_test -mean(y_test))^2)
-
+LM <- indicator(model1)
 
 ## model 2 
 
-yhat_train_2 <- predict(model2, newdata = BD_ModDR[s_train , ])
-yhat_test_2  <- predict(model2, newdata = BD_ModDR[-s_train , ])
+RF2.1 <- indicator(model2.1)
 
-R2_train_2 <- 1 - sum((y_train-yhat_train_2)^2)/sum((y_train-mean(y_train))^2)
-R2_test_2  <- 1 - sum((y_test -yhat_test_2)^2) /sum((y_test -mean(y_test))^2)
+RF2.2 <- indicator(model2.2)
 
+RF2.3 <- indicator(model2.3)
+
+tb_results <- data.frame(
+  data_set = c("train","test"),
+  linear_regression = LM,
+  random_forest_50  = RF2.1,
+  random_forest_250 = RF2.2,
+  random_forest_500 = RF2.3)
 
 ## model 3
 
 model3.null <- readRDS("model3_null.rds")
 
-R2_train_3 <- 1 - (model3$deviance/model3.null$deviance)
+R2_train <- 1 - (model3$deviance/model3.null$deviance)
 
-tb_results <- data.frame(
-  Model = c("linear regression", "random forest", "ordered logit"),
-  Train = c(R2_train_1, R2_train_2, R2_train_3),
-  Test  = c(R2_test_1,  R2_test_2,  NA)
-      )
+ordered_logistic <- c(R2_train, NA)
+
+tb_results <-  cbind(tb_results,ordered_logistic)
+
+```
+
+```{r echo=FALSE}
+
 tb_results %>%
   kbl() %>%
   kable_material(c("striped"),full_width = T)
+
 ```
 
+The random forest models (regardless of the number of trees that were set, 50 to 500) display the best performance on the train set, however when applied to the test set the indicator is just above of that for the linear regression. The logistic regression has a really low indicator in the train set so there is no point on evaluating is performance on the test set. 
+In deciding which model to select for deployment, one factor is easiness to interpret results, therefore I decided to export the linear regression model. It has also another positive aspect, a much shorter computer time for estimation.
 
-## Deployment
+## Model Deployment
 
 A shiny app was developed so that interested parties can interact with the model. [Shiny](https://shiny.rstudio.com/tutorial/) is an R package that makes it easy to build interactive web apps straight from R. This tool allows to host standalone apps on a webpage or embed them in R Markdown documents or build dashboards.
 
@@ -379,18 +417,167 @@ The three components of an app are:
 
 On top of that, the Shiny apps can be deployed easily on the shiny server with a **free tier of 5 applications and 25 active hours**. More information can be found on the [Shiny tutorial](https://shiny.rstudio.com/tutorial/)
 
+```{r eval= F, include= T}
 
-```{r eval=FALSE, include= T}
+# Libraries
+library(shiny)
+library(shinythemes)
+library(tidyverse)
+library(leaflet)     
+library(htmlwidgets) 
+library(sf)
+library(data.table)
+library(randomForest)
 
-## app code
+# background data
+all_modzcta <- readRDS("map.rds")
+all_modzcta$DISTANCE <- round(all_modzcta$DISTANCE,3)
+all_modzcta <- all_modzcta %>% st_as_sf(crs = 4326, sf_column_name = "geometry")
 
-# test  <-  BD_ModDR %>%  
-#   select(DISTANCE:EntScore) %>%
-#   mutate(DISTANCE = cut(DISTANCE,5),
-#          AGE      = AGE/10,
-#          EntScore = EntScore*10) %>% 
-#   slice(-s_train) 
-# 
-# yhat_test <- predict(model, newdata = test)
+# Define UI for application ####
+
+ui <- fluidPage(
+  theme = shinytheme("darkly"),
+    # Application title
+    titlePanel("Trip distance calculator for Bogota's residents"),
+    
+    # Sidebar with a date input 
+    sidebarLayout(
+        sidebarPanel(
+          tags$a(href="https://github.com/jpb2288/DS_project", "Data Repository", target="_blank"),
+          
+          h5("For prediction of your most likely trip distance choose the tap 'Distance calculator' on the right panel, select your profile with the controls below and press the 'Submit' button"),
+          
+          sliderInput("AGE", 
+                      label = "Choose your age:", value = 35.0,
+                      min = 15,
+                      max = 80),
+          
+          selectInput("GENDER",
+                      "Choose your gender:",
+                      choices = unique(all_modzcta$GENDER)),
+          
+          selectInput("OCCUPATION",
+                      "Choose your main activity:",
+                      choices = unique(all_modzcta$OCCUPATION)),
+          
+          selectInput("MODE_T",
+                      "Choose your preferred transportation mode:",
+                      choices = unique(all_modzcta$MODE_T)),
+          
+          actionButton("submitbutton", "Submit", class = "btn btn-primary")
+        ),
+        
+    # Main panel
+    mainPanel(
+      tabsetPanel(
+        tabPanel("About", icon=icon("address-card"),
+                 fluidRow(
+                   column(width = 4, tags$br(),
+                          tags$img(src="city.jpg", width =300 , height = 250),
+                          tags$a("Photo from smart cities forum"), align = "center"),
+                   column(width = 8, tags$br(),
+                          tags$p("With this tool you can calculate your average trip distance, taking into account the mode of transport you have available (or you use most frequently).
+                                 The distance is calculated according to the responses given in the Bogota mobility survey by people with sociodemographic variables similar to yours."),
+                          tags$p("The map in the tap 'Distance calculator' shows the distance according to your characteristics and your house location in the city."),
+                          tags$p("This project is inspired on the author previous work published as a paper on the journal of transport geography. It can be downloaded from https://doi.org/10.1016/j.jtrangeo.2020.102844"),
+                          tags$p("In adition, this project was developed as final project for the Fall 2022 course CS551- Data Science of the University of Alabama"),
+                          tags$img(src="UA_logo.png", width =200 , height = 40)
+                   ))),
+        tabPanel("Distance calculator", icon=icon("map"), 
+                     leafletOutput("DISTANCE"),
+                     tags$label(h3('Trip distance (km)')),
+                     verbatimTextOutput('contents'),
+                     tableOutput('tabledata')
+                     )))))
+
+
+
+# Define server logic ####
+
+# Read in the RF model
+model <- readRDS("model.rds")
+
+server <- function(input, output) {
+  
+  week_zcta <- reactive({
+    w <- all_modzcta %>% filter(GENDER     == input$GENDER,
+                                OCCUPATION == input$OCCUPATION,
+                                MODE_T     == input$MODE_T)
+    return(w)
+  })
+  
+  datasetInput <- reactive({
+    
+    df <- data.frame(
+      Name = c("GENDER",      "AGE",     "OCCUPATION",     "INCOME", "MODE_T",     "EntScore"),
+      Value = c(input$GENDER, input$AGE, input$OCCUPATION, "Middle", input$MODE_T, 0.7629203),
+      stringsAsFactors = FALSE)
+
+    input <- data.table::transpose(df)
+    write.table(input,"input.csv", sep=",", quote = FALSE, row.names = FALSE, col.names = FALSE)
+    
+    test <- read.csv(paste("input", ".csv", sep=""), header = TRUE)
+    
+    OUT <- data.frame(Prediction=round(predict(model,test), 3))
+    print(OUT)
+  })
+           
+  output$DISTANCE <- renderLeaflet({
+    pal <- colorBin(palette = "YlGn", 9, domain = all_modzcta$DISTANCE)
+    
+    labels = sprintf(
+      "<strong>%s</strong><br/>%g Trip distance (km)",
+      week_zcta()$zones, week_zcta()$DISTANCE) %>% 
+      lapply(htmltools::HTML)
+    
+    week_zcta() %>% 
+      leaflet() %>% 
+      addProviderTiles(provider = "CartoDB.Positron") %>%
+      setView(-74.06, 4.62,zoom = 11) %>% 
+      addPolygons(label = labels,
+                  stroke = FALSE,
+                  smoothFactor = .5,
+                  opacity = 1,
+                  fillOpacity = 0.7,
+                  fillColor = ~ pal(week_zcta()$DISTANCE),
+                  highlightOptions = highlightOptions(weight = 5,
+                                                      fillOpacity = 1,
+                                                      color = "black",
+                                                      opacity = 1,
+                                                      bringToFront = TRUE)) %>% 
+      addLegend("bottomright", 
+                pal = pal, 
+                values = ~ DISTANCE,
+                title = "Trip distance (km)",
+                opacity = 0.7)
+  })
+  
+  # Status/Output Text Box
+  output$contents <- renderPrint({
+    if (input$submitbutton>0) {
+      isolate("Calculation complete.")
+    } else {
+      return("Server is ready for calculation.")
+    }})
+  
+  # Prediction results table
+  output$tabledata <- renderTable({
+    if (input$submitbutton>0) {
+      isolate(datasetInput())}
+    })}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
 
 ```
+
+## Runtime monitoring
+
+The application can be accessed remotely on the following link <https://jpb2288.shinyapps.io/mix_test/>. It was shared with multiple colleagues who interacted with it and did not reported any issue. As the app is reactive to the input of each user, a data set is automatically created and predictions made on real time. 
+
+## Conclusions
+
+This project gave insights on the two intended purposes. For the first one, the variables significant in the original model are still significant when other models are developed. The transportation mode is the most important predictor for travel distance.
+
+For the second purpose of this study, a couple of conclusions are presented. 1. The random forest model might have a bit better performance but its interpretation and estimation is more complex, therefore a much more simpler model such as a linear model was selected for deployment. 2. On the deployment, many users interacted with the application and learnt about this research on an alternative way to reading a paper.
