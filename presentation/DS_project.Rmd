@@ -574,7 +574,7 @@ shinyApp(ui = ui, server = server)
 
 ## Runtime monitoring
 
-The application can be accessed remotely on the following link <https://jpb2288.shinyapps.io/mix_test/>. It was shared with multiple colleagues who interacted with it and did not reported any issue. As the app is reactive to the input of each user, a data set is automatically created and predictions made on real time. 
+The application can be accessed remotely on the following link <https://jpb2288.shinyapps.io/DS_project/>. It was shared with multiple colleagues who interacted with it and did not reported any issue. As the app is reactive to the input of each user, a data set is automatically created and predictions made on real time. 
 
 ## Conclusions
 
