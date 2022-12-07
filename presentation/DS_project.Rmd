@@ -32,7 +32,7 @@ library(MASS)
 library(tidyverse)
 ```
 
-# A model to predict the average travel distance of Bogota residents: *Model estimation, visualization and deployment*
+# A model for predicting the average travel distance in Bogota: *Model estimation, visualization and deployment*
 
 ## Introduction
 
@@ -574,7 +574,8 @@ shinyApp(ui = ui, server = server)
 
 ## Runtime monitoring
 
-The application can be accessed remotely on the following link <https://jpb2288.shinyapps.io/DS_project/>. It was shared with multiple colleagues who interacted with it and did not reported any issue. As the app is reactive to the input of each user, a data set is automatically created and predictions made on real time. 
+The application can be accessed remotely on the following link <https://jpb2288.shinyapps.io/DS_project/>. As the app is reactive to the input of each user, a data set is automatically created and predictions made on real time. It was shared with multiple colleagues who interacted with it and did not reported any issue but ways to improve interaction. One example comment is "The application fulfills its function and provides fast and practical results for any user 10/10. It would be possible to add the functionality of automatically displaying the map and the result of the calculation when the submit button is pressed. When viewed on cell phones is not so direct the procedure." 
+
 
 ## Conclusions
 
